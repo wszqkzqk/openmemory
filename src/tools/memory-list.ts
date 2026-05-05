@@ -1,13 +1,11 @@
 import { tool } from "@opencode-ai/plugin"
-import type { PluginConfig, MemoryScope, MemoryIndex } from "../types"
+import type { MemoryScope, MemoryIndex } from "../types"
 import { resolveMemoryDir } from "../types"
-import { fileExists, listMdFiles } from "../storage"
+import { fileExists, listMdFiles, listSessionDirs } from "../storage"
 import { readIndex, formatIndexMarkdown } from "../indexer"
 import { getGlobalMemoryPath } from "../shared"
-import { readdir } from "node:fs/promises"
-import { join } from "node:path"
 
-export function memoryListTool(_config: PluginConfig) {
+export function memoryListTool() {
   return tool({
     description:
       "List all memory files in a scope. Returns a compact table with slug, title, type, tags, status, and last-updated date. " +
@@ -71,19 +69,8 @@ export function memoryListTool(_config: PluginConfig) {
   })
 }
 
-async function listSessionMemories(worktree: string, status?: string): Promise<string> {
-  const sessionBase = join(worktree, ".openmemory", "session")
-  if (!(await fileExists(sessionBase))) {
-    return "No session memory directory exists yet."
-  }
-
-  let sessionDirs: string[] = []
-  try {
-    const entries = await readdir(sessionBase, { withFileTypes: true })
-    sessionDirs = entries.filter(e => e.isDirectory()).map(e => join(sessionBase, e.name))
-  } catch {
-    return "Could not read session directory."
-  }
+async function listSessionMemories(worktree: string, _status?: string): Promise<string> {
+  const sessionDirs = await listSessionDirs(worktree)
 
   if (sessionDirs.length === 0) return "No active session memories."
 

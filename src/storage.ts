@@ -1,9 +1,5 @@
-import { mkdir, readdir, unlink, rename, stat } from "node:fs/promises"
+import { mkdir, readdir, unlink, stat } from "node:fs/promises"
 import { join, dirname } from "node:path"
-
-export function getProjectBase(worktree: string): string {
-  return join(worktree, ".openmemory")
-}
 
 export async function ensureDir(path: string): Promise<void> {
   await mkdir(path, { recursive: true })
@@ -33,14 +29,6 @@ export async function deleteFile(path: string): Promise<void> {
   }
 }
 
-export async function moveFile(from: string, to: string): Promise<void> {
-  await ensureDir(dirname(to))
-  if (await fileExists(to)) {
-    await unlink(to)
-  }
-  await rename(from, to)
-}
-
 export async function listMdFiles(dir: string): Promise<string[]> {
   if (!(await fileExists(dir))) return []
   const entries = await readdir(dir, { withFileTypes: true })
@@ -49,11 +37,22 @@ export async function listMdFiles(dir: string): Promise<string[]> {
     .map(e => e.name)
 }
 
-export async function lastModified(path: string): Promise<Date> {
+export async function gitHash(worktree: string): Promise<string | undefined> {
   try {
-    const s = await stat(path)
-    return s.mtime
+    const { stdout } = await Bun.$`git -C ${worktree} rev-parse HEAD`.nothrow()
+    return stdout.toString().trim() || undefined
   } catch {
-    return new Date()
+    return undefined
+  }
+}
+
+export async function listSessionDirs(worktree: string): Promise<string[]> {
+  const sessionBase = join(worktree, ".openmemory", "session")
+  if (!(await fileExists(sessionBase))) return []
+  try {
+    const entries = await readdir(sessionBase, { withFileTypes: true })
+    return entries.filter(e => e.isDirectory()).map(e => join(sessionBase, e.name))
+  } catch {
+    return []
   }
 }

@@ -21,5 +21,5 @@ Thumbs.db
 # Test artifacts
 .openmemory/
 
-# Bun
-bun.lock
+# Pack output
+*.tgz

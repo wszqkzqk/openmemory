@@ -2,7 +2,7 @@ import { resolveMemoryDir, slugFromFilename } from "./types"
 import { listMdFiles } from "./storage"
 import { readMemoryFile, extractFrontMatterCompact } from "./frontmatter"
 import { readIndex } from "./indexer"
-import { readdir, rm } from "node:fs/promises"
+import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
 export async function buildCompactionContext(

@@ -1,12 +1,12 @@
 import { tool } from "@opencode-ai/plugin"
 import { resolveMemoryPath, isValidSlug } from "../types"
-import type { PluginConfig, MemoryScope, MemoryFrontMatter } from "../types"
+import type { MemoryScope, MemoryFrontMatter } from "../types"
 import { buildMemoryFile } from "../frontmatter"
-import { writeFile } from "../storage"
+import { writeFile, gitHash } from "../storage"
 import { regenerateIndex } from "../indexer"
 import { getGlobalMemoryPath } from "../shared"
 
-export function memoryStoreTool(_config: PluginConfig) {
+export function memoryStoreTool() {
   return tool({
     description:
       "Save a memory to the filesystem. Creates or overwrites a Markdown file with YAML front matter. " +
@@ -58,11 +58,7 @@ export function memoryStoreTool(_config: PluginConfig) {
         const worktree = context.worktree || context.directory
         const globalPath = getGlobalMemoryPath()
 
-        let gitHash: string | undefined
-        try {
-          const { stdout } = await Bun.$`git -C ${worktree} rev-parse HEAD`.nothrow()
-          gitHash = stdout.toString().trim() || undefined
-        } catch {}
+        const gitCommit = await gitHash(worktree)
 
         const now = new Date().toISOString()
         const projectSlug = worktree.split("/").pop() || "unknown"
@@ -77,7 +73,7 @@ export function memoryStoreTool(_config: PluginConfig) {
           status: "active",
           source: "agent",
           importance: args.importance ?? 3,
-          gitHash: gitHash || undefined,
+          gitHash: gitCommit || undefined,
           related: args.related?.slice(0, 10),
           entities: args.entities?.slice(0, 20),
         }

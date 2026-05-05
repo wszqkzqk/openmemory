@@ -1,9 +1,7 @@
-import type { MemoryFile, MemoryIndex, MemoryIndexEntry, MemoryScope, MemoryStatus } from "./types"
+import type { MemoryIndex, MemoryIndexEntry, MemoryScope, MemoryStatus } from "./types"
 import { resolveMemoryDir } from "./types"
-import { listMdFiles, writeFile, readFile, fileExists } from "./storage"
+import { listMdFiles, writeFile, readFile, fileExists, listSessionDirs } from "./storage"
 import { readMemoryFile } from "./frontmatter"
-import { readdir } from "node:fs/promises"
-import { join } from "node:path"
 
 export async function regenerateIndex(
   scope: MemoryScope,
@@ -69,11 +67,11 @@ export function formatIndexMarkdown(index: MemoryIndex): string {
       lines.push("|------|-------|------|------|---------|------------|")
     }
       for (const e of entries) {
-      const tags = esc(e.tags.join(", ")) || "—"
+      const tags = escapePipe(e.tags.join(", ")) || "—"
       if (status === "stale") {
-        lines.push(`| ${esc(e.slug)} | ${esc(e.title)} | ${esc(e.type)} | ${tags} | ${e.updated} | ${e.expires ?? "—"} |`)
+        lines.push(`| ${escapePipe(e.slug)} | ${escapePipe(e.title)} | ${escapePipe(e.type)} | ${tags} | ${e.updated} | ${e.expires ?? "—"} |`)
       } else {
-        lines.push(`| ${esc(e.slug)} | ${esc(e.title)} | ${esc(e.type)} | ${tags} | ${e.updated} | ${e.importance} |`)
+        lines.push(`| ${escapePipe(e.slug)} | ${escapePipe(e.title)} | ${escapePipe(e.type)} | ${tags} | ${e.updated} | ${e.importance} |`)
       }
     }
     lines.push("")
@@ -105,7 +103,7 @@ function parseIndexMarkdown(content: string, scope: MemoryScope): MemoryIndex {
     else if (line.startsWith("## stale")) currentStatus = "stale"
     else if (line.startsWith("## archived")) currentStatus = "archived"
     else if (line.startsWith("|") && !line.includes("---") && currentStatus) {
-      const cells = line.split("|").map(c => unesc(c.trim())).filter(Boolean)
+      const cells = line.split("|").map(c => unescapePipe(c.trim())).filter(Boolean)
       if (cells.length >= 5) {
         entries.push({
           slug: cells[0] ?? "",
@@ -136,19 +134,11 @@ export async function getMemoryStats(
 ): Promise<Record<MemoryScope, { total: number; active: number; stale: number; archived: number }>> {
   const result: Record<string, { total: number; active: number; stale: number; archived: number }> = {}
 
-  // Session scope — count files across all session subdirectories
   let sessionTotal = 0
-  const sessionBase = join(worktree, ".openmemory", "session")
-  if (await fileExists(sessionBase)) {
-    try {
-      const entries = await readdir(sessionBase, { withFileTypes: true })
-      const sessionDirs = entries.filter(e => e.isDirectory()).map(e => join(sessionBase, e.name))
-      for (const dir of sessionDirs) {
-        const files = await listMdFiles(dir)
-        sessionTotal += files.length
-      }
-    } catch {
-    }
+  const sessionDirs = await listSessionDirs(worktree)
+  for (const dir of sessionDirs) {
+    const files = await listMdFiles(dir)
+    sessionTotal += files.length
   }
   result["session"] = { total: sessionTotal, active: sessionTotal, stale: 0, archived: 0 }
 
@@ -168,10 +158,10 @@ export async function getMemoryStats(
   return result as Record<MemoryScope, typeof result[string]>
 }
 
-function esc(s: string): string {
+function escapePipe(s: string): string {
   return s.replace(/\|/g, "\\|")
 }
 
-function unesc(s: string): string {
+function unescapePipe(s: string): string {
   return s.replace(/\\\|/g, "|")
 }

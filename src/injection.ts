@@ -3,8 +3,16 @@ import { getMemoryStats } from "./indexer"
 import { searchMemories } from "./search"
 import type { SearchResult } from "./types"
 
+type MemoryStats = Record<MemoryScope, { total: number; active: number; stale: number; archived: number }>
+
+interface InjectionContext {
+  stats: MemoryStats
+  projectIndex: SearchResult[]
+  globalMemory: SearchResult[]
+}
+
 export function buildContextBlock(
-  stats: Record<MemoryScope, { total: number; active: number; stale: number; archived: number }>,
+  stats: MemoryStats,
   projectIndex: SearchResult[],
   globalMemory: SearchResult[],
 ): string {
@@ -31,17 +39,17 @@ export function buildContextBlock(
     lines.push("")
   }
 
-  const projStats = stats.project
-  if (projStats && projStats.total > 0) {
-    lines.push(`## Project Memory (${projStats.active} active, ${projStats.stale} stale)`)
+  const projectStats = stats.project
+  if (projectStats && projectStats.total > 0) {
+    lines.push(`## Project Memory (${projectStats.active} active, ${projectStats.stale} stale)`)
     lines.push("")
     if (projectIndex.length > 0) {
       for (const r of projectIndex.slice(0, 10)) {
         lines.push(`- **${r.slug}** — ${r.title} [${r.type}, ${r.importance}/5, ${r.updated}]`)
       }
     }
-    if (projStats.stale > 0) {
-      lines.push(`- *${projStats.stale} stale memories* — run \`memory_check\` to review`)
+    if (projectStats.stale > 0) {
+      lines.push(`- *${projectStats.stale} stale memories* — run \`memory_check\` to review`)
     }
     lines.push("")
   }
@@ -55,7 +63,7 @@ export function buildContextBlock(
 export async function collectContextForInjection(
   worktree: string,
   globalPath: string,
-): Promise<{ stats: ReturnType<typeof getMemoryStats> extends Promise<infer T> ? T : never; projectIndex: SearchResult[]; globalMemory: SearchResult[] }> {
+): Promise<InjectionContext> {
   const stats = await getMemoryStats(worktree, globalPath)
   const projectIndex = await searchMemories({ scope: "project", status: "active", limit: 10 }, worktree, globalPath)
   const globalMemory = await searchMemories(
@@ -63,5 +71,5 @@ export async function collectContextForInjection(
     worktree,
     globalPath,
   )
-  return { stats, projectIndex, globalMemory } as any
+  return { stats, projectIndex, globalMemory }
 }

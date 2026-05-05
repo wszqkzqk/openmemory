@@ -24,15 +24,38 @@ The design principle: **the filesystem is the database**. No moving parts.
 
 ## Usage
 
-Put this in `opencode.json`:
+### From npm
+
+Add to `opencode.json`:
 
 ```json
 {
-  "plugin": ["@openmemory/opencode-plugin"],
+  "plugin": ["@wszqkzqk/openmemory"],
   "permission": {
     "skill": { "openmemory": "allow" }
   }
 }
+```
+
+### From source
+
+```bash
+git clone https://github.com/wszqkzqk/openmemory
+cd opencode-plugin
+bun install
+bun run build
+```
+
+Then copy into your project or global config:
+
+```bash
+# Project only:
+cp dist/index.js your-project/.opencode/plugins/openmemory.js
+cp -r skills/openmemory your-project/.opencode/skills/
+
+# Or globally:
+cp dist/index.js ~/.config/opencode/plugins/openmemory.js
+cp -r skills/openmemory ~/.config/opencode/skills/
 ```
 
 Directories are created on first use. No config file required.
@@ -186,7 +209,7 @@ Optional overrides:
 ## Development
 
 ```bash
-git clone https://github.com/openmemory/opencode-plugin
+git clone https://github.com/wszqkzqk/openmemory
 cd opencode-plugin
 bun install
 bun test        # 56 tests, 7 suites

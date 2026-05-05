@@ -31,13 +31,13 @@ export const OpenMemoryPlugin: Plugin = async (ctx) => {
 
   return {
     tool: {
-      memory_store: memoryStoreTool(config),
-      memory_get: memoryGetTool(config),
+      memory_store: memoryStoreTool(),
+      memory_get: memoryGetTool(),
       memory_search: memorySearchTool(config),
-      memory_list: memoryListTool(config),
-      memory_update: memoryUpdateTool(config),
-      memory_delete: memoryDeleteTool(config),
-      memory_scan: memoryScanTool(config),
+      memory_list: memoryListTool(),
+      memory_update: memoryUpdateTool(),
+      memory_delete: memoryDeleteTool(),
+      memory_scan: memoryScanTool(),
       memory_check: memoryCheckTool(config),
     },
 

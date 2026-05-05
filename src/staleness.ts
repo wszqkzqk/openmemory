@@ -1,8 +1,7 @@
 import type { MemoryScope, MemoryFrontMatter, StalenessReport, StalenessReason } from "./types"
 import { resolveMemoryDir } from "./types"
-import { listMdFiles, fileExists } from "./storage"
+import { listMdFiles, fileExists, listSessionDirs } from "./storage"
 import { readMemoryFile } from "./frontmatter"
-import { readdir } from "node:fs/promises"
 import { join } from "node:path"
 
 const MS_PER_DAY = 86_400_000
@@ -44,17 +43,7 @@ export async function checkStaleness(
 
 async function checkSessionStaleness(worktree: string, staleAgeDays: number): Promise<StalenessReport[]> {
   const reports: StalenessReport[] = []
-  const sessionBase = join(worktree, ".openmemory", "session")
-
-  if (!(await fileExists(sessionBase))) return reports
-
-  let sessionDirs: string[] = []
-  try {
-    const entries = await readdir(sessionBase, { withFileTypes: true })
-    sessionDirs = entries.filter(e => e.isDirectory()).map(e => join(sessionBase, e.name))
-  } catch {
-    return reports
-  }
+  const sessionDirs = await listSessionDirs(worktree)
 
   for (const sessionDir of sessionDirs) {
     const files = await listMdFiles(sessionDir)

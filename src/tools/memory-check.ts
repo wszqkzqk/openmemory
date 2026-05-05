@@ -1,6 +1,7 @@
 import { tool } from "@opencode-ai/plugin"
 import type { PluginConfig } from "../types"
 import { checkStaleness, formatStalenessReports } from "../staleness"
+import { gitHash } from "../storage"
 import { getGlobalMemoryPath } from "../shared"
 
 export function memoryCheckTool(config: PluginConfig) {
@@ -19,11 +20,7 @@ export function memoryCheckTool(config: PluginConfig) {
         const worktree = context.worktree || context.directory
         const globalPath = getGlobalMemoryPath()
 
-        let currentGitHash: string | undefined
-        try {
-          const { stdout } = await Bun.$`git -C ${worktree} rev-parse HEAD`.nothrow()
-          currentGitHash = stdout.toString().trim() || undefined
-        } catch {}
+        const currentGitHash = await gitHash(worktree)
 
         const scope = args.scope as any
         const reports = await checkStaleness(scope, worktree, globalPath, config.staleAgeDays, currentGitHash)

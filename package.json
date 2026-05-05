@@ -1,6 +1,6 @@
 {
-  "name": "@openmemory/opencode-plugin",
-  "version": "1.0.0",
+  "name": "@wszqkzqk/openmemory",
+  "version": "0.1.0",
   "description": "File-based three-layer persistent memory system for OpenCode agents — Markdown + YAML front matter, no external dependencies beyond the OpenCode runtime",
   "type": "module",
   "main": "./dist/index.js",
@@ -40,7 +40,7 @@
   "author": "Zhou Qiankang <wszqkzqk@qq.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/openmemory/opencode-plugin"
+    "url": "https://github.com/wszqkzqk/openmemory"
   },
   "bugs": {
     "url": "https://github.com/openmemory/opencode-plugin/issues"

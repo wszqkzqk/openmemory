@@ -1,12 +1,12 @@
 import { tool } from "@opencode-ai/plugin"
 import { resolveMemoryPath, isValidSlug } from "../types"
-import type { PluginConfig, MemoryScope } from "../types"
+import type { MemoryScope } from "../types"
 import { readMemoryFile, buildMemoryFile } from "../frontmatter"
-import { writeFile, fileExists } from "../storage"
+import { writeFile, fileExists, gitHash } from "../storage"
 import { regenerateIndex } from "../indexer"
 import { getGlobalMemoryPath } from "../shared"
 
-export function memoryUpdateTool(_config: PluginConfig) {
+export function memoryUpdateTool() {
   return tool({
     description:
       "Update an existing memory file. Modify the body content, change metadata fields, or mark as stale/archived. " +
@@ -83,11 +83,8 @@ export function memoryUpdateTool(_config: PluginConfig) {
 
         fm.updated = new Date().toISOString()
 
-        try {
-          const { stdout } = await Bun.$`git -C ${worktree} rev-parse HEAD`.nothrow()
-          const hash = stdout.toString().trim()
-          if (hash) fm.gitHash = hash
-        } catch {}
+        const commit = await gitHash(worktree)
+        if (commit) fm.gitHash = commit
 
         const body = args.content !== undefined ? args.content : memory.body
         const fileContent = buildMemoryFile(fm, body)

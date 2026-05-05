@@ -1,11 +1,11 @@
 import { tool } from "@opencode-ai/plugin"
-import type { PluginConfig, MemoryScope } from "../types"
+import type { MemoryScope } from "../types"
 import { resolveMemoryDir } from "../types"
 import { fileExists } from "../storage"
 import { getMemoryStats } from "../indexer"
 import { getGlobalMemoryPath } from "../shared"
 
-export function memoryScanTool(_config: PluginConfig) {
+export function memoryScanTool() {
   return tool({
     description:
       "Scan all memory scopes for a quick overview. Returns counts by scope and status, plus top-level summary. " +

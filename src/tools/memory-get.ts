@@ -1,11 +1,11 @@
 import { tool } from "@opencode-ai/plugin"
 import { resolveMemoryPath } from "../types"
-import type { PluginConfig, MemoryScope } from "../types"
+import type { MemoryScope } from "../types"
 import { readMemoryFile, extractFrontMatterSummary } from "../frontmatter"
 import { fileExists } from "../storage"
 import { getGlobalMemoryPath } from "../shared"
 
-export function memoryGetTool(_config: PluginConfig) {
+export function memoryGetTool() {
   return tool({
     description:
       "Read a specific memory file by its slug. Returns the full content including YAML front matter and body. " +

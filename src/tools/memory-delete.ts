@@ -1,12 +1,12 @@
 import { tool } from "@opencode-ai/plugin"
 import { resolveMemoryPath, isValidSlug } from "../types"
-import type { PluginConfig, MemoryScope } from "../types"
+import type { MemoryScope } from "../types"
 import { readMemoryFile, buildMemoryFile } from "../frontmatter"
 import { writeFile, fileExists, deleteFile as deleteFromDisk } from "../storage"
 import { regenerateIndex } from "../indexer"
 import { getGlobalMemoryPath } from "../shared"
 
-export function memoryDeleteTool(_config: PluginConfig) {
+export function memoryDeleteTool() {
   return tool({
     description:
       "Delete or archive a memory file. Use mode='archive' to keep the file but exclude from active results (recommended, reversible). " +

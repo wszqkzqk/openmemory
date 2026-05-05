@@ -1,9 +1,8 @@
 import type { MemoryScope, MemoryType, MemoryStatus, SearchResult } from "./types"
 import { slugFromFilename } from "./types"
-import { listMdFiles, readFile, fileExists } from "./storage"
+import { listMdFiles, listSessionDirs } from "./storage"
 import { readMemoryFile } from "./frontmatter"
 import { readIndex } from "./indexer"
-import { readdir } from "node:fs/promises"
 import { join } from "node:path"
 
 export interface SearchParams {
@@ -29,7 +28,7 @@ export async function searchMemories(
 
   for (const scope of scopes) {
     if (scope === "session") {
-      const sessionResults = await searchSessionScope(params, worktree, needsBodyScan, sessionID)
+      const sessionResults = await searchSessionScope(params, worktree, sessionID)
       results.push(...sessionResults)
       continue
     }
@@ -108,7 +107,7 @@ export async function searchMemories(
       const dir = scope === "project"
         ? join(worktree, ".openmemory", "project")
         : globalPath
-      const fileResults = await scanDirectory(dir, scope, params, needsBodyScan)
+      const fileResults = await scanDirectory(dir, scope, params)
       results.push(...fileResults)
     }
   }
@@ -124,24 +123,13 @@ export async function searchMemories(
 async function searchSessionScope(
   params: SearchParams,
   worktree: string,
-  needsBodyScan: boolean,
   sessionID?: string,
 ): Promise<SearchResult[]> {
   const query = params.query?.toLowerCase()
-  const sessionBase = join(worktree, ".openmemory", "session")
   const results: SearchResult[] = []
 
-  if (!(await fileExists(sessionBase))) return []
+  let sessionDirs = await listSessionDirs(worktree)
 
-  let sessionDirs: string[] = []
-  try {
-    const entries = await readdir(sessionBase, { withFileTypes: true })
-    sessionDirs = entries.filter(e => e.isDirectory()).map(e => join(sessionBase, e.name))
-  } catch {
-    return []
-  }
-
-  // If sessionID is known, only search the current session's directory
   if (sessionID) {
     sessionDirs = sessionDirs.filter(d => d.endsWith(sessionID))
   }
@@ -187,7 +175,6 @@ async function scanDirectory(
   dir: string,
   scope: MemoryScope,
   params: SearchParams,
-  needsBodyScan: boolean,
 ): Promise<SearchResult[]> {
   const results: SearchResult[] = []
   const query = params.query?.toLowerCase()

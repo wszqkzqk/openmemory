@@ -1,5 +1,3 @@
-import type { z } from "zod"
-
 export const MemoryType = ["identity", "directive", "context", "bookmark"] as const
 export type MemoryType = (typeof MemoryType)[number]
 
@@ -124,19 +122,6 @@ export function filenameFromSlug(slug: string): string {
 
 export function isValidSlug(slug: string): boolean {
   return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)
-}
-
-export function isValidFrontMatter(data: unknown): data is MemoryFrontMatter {
-  if (typeof data !== "object" || data === null) return false
-  const d = data as Record<string, unknown>
-  return (
-    typeof d.title === "string" &&
-    typeof d.type === "string" && MemoryType.includes(d.type as MemoryType) &&
-    typeof d.scope === "string" &&
-    Array.isArray(d.tags) && d.tags.every((t: unknown) => typeof t === "string") &&
-    typeof d.created === "string" &&
-    typeof d.updated === "string"
-  )
 }
 
 export const DEFAULT_FRONTMATTER: MemoryFrontMatter = {
