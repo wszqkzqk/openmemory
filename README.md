@@ -1,6 +1,6 @@
 # OpenMemory
 
-Persistent memory for OpenCode agents. Your knowledge lives in plain Markdown files — you can read them, edit them, grep them, commit them. Three layers keep temporary scratchpad notes separate from lasting project knowledge. The agent does the busywork. You stay in control.
+A lightweight but powerful and layered memory system for coding agents. Currently OpenCode only, with other platforms to follow. Your knowledge lives in plain Markdown files — readable, editable, grepable, committable. **The agent handles the busywork; you stay in control.**
 
 > Your agent starts every session with amnesia. You tell it about your stack, your conventions, your preferences. Next session, gone. You repeat yourself. It re-discovers the same things. This is wasteful, inconsistent, and frankly boring.
 
