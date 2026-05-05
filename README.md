@@ -24,9 +24,9 @@ The design principle: **the filesystem is the database**. No moving parts.
 
 ## Usage
 
-### From npm
+### Install from npm
 
-Add to `opencode.json`:
+Add to `~/.config/opencode/opencode.json`:
 
 ```json
 {
@@ -37,60 +37,27 @@ Add to `opencode.json`:
 }
 ```
 
-### From source
+### Install from source
 
 ```bash
 git clone https://github.com/wszqkzqk/openmemory
-cd opencode-plugin
+cd openmemory
 bun install
 bun run build
 ```
 
-Then copy into your project or global config:
+Then copy into your global config:
 
 ```bash
-# Project only:
-cp dist/index.js your-project/.opencode/plugins/openmemory.js
-cp -r skills/openmemory your-project/.opencode/skills/
-
-# Or globally:
 cp dist/index.js ~/.config/opencode/plugins/openmemory.js
 cp -r skills/openmemory ~/.config/opencode/skills/
 ```
 
 Directories are created on first use. No config file required.
 
-You don't call the tools yourself. The agent does. Here's what a typical session looks like under the hood.
+Once installed, the agent handles the rest. It browses the memory list before starting work, reads what's relevant, and records important discoveries without being asked. When a memory goes stale — a dependency upgrades, an API changes, you switch patterns — `memory_check` surfaces it. Bad information doesn't linger.
 
-```
-User: "Add rate limiting to the API"
-
-Agent calls memory_list { scope: "project" }
-  → Table shows: decisions, architecture, testing-conventions, gotchas
-
-Agent picks decisions.md from the list, calls memory_get { slug: "decisions", scope: "project" }
-  → Reads full context. Discovers Redis is already in the stack.
-
-Agent calls memory_search { query: "rate limit", scope: "project" }
-  → Quick grep, nothing found. Proceeds with implementation.
-
-Agent implements rate limiting using Redis
-  → Tests pass, code committed
-
-Agent calls memory_store {
-  slug: "api-rate-limiting",
-  type: "context",
-  scope: "project",
-  tags: ["rate-limiting", "redis", "api"],
-  content: "Implemented token bucket rate limiting..."
-}
-```
-
-Three turns of the agent thinking ahead of you. It browses the memory list, reads what's relevant, greps for specifics. It finds existing knowledge, uses it, then records what it did so the next session picks up where this one left off.
-
-When a memory goes stale — a dependency upgrades, an API changes, you tell the agent to switch patterns — `memory_check` surfaces it. The agent marks it stale or updates it. Bad information doesn't linger.
-
-Global memory requires your permission. "Remember that I always use TypeScript strict mode" — the agent asks, you approve, it gets stored. Every future session sees it.
+Global memory requires your permission. "Remember that I always use TypeScript strict mode" — the agent asks, you approve. Every future session sees it.
 
 ---
 
@@ -210,7 +177,7 @@ Optional overrides:
 
 ```bash
 git clone https://github.com/wszqkzqk/openmemory
-cd opencode-plugin
+cd openmemory
 bun install
 bun test        # 56 tests, 7 suites
 bun run build   # → dist/index.js
