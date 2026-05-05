@@ -1,6 +1,6 @@
 {
   "name": "@wszqkzqk/openmemory",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "File-based three-layer persistent memory system for OpenCode agents — Markdown + YAML front matter, no external dependencies beyond the OpenCode runtime",
   "type": "module",
   "main": "./dist/index.js",
