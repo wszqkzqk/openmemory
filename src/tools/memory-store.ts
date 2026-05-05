@@ -100,7 +100,7 @@ export function memoryStoreTool(_config: PluginConfig) {
         }
 
         const fileContent = buildMemoryFile(fm, args.content)
-        const filePath = resolveMemoryPath(args.scope as MemoryScope, args.slug, worktree, globalPath)
+        const filePath = resolveMemoryPath(args.scope as MemoryScope, args.slug, worktree, globalPath, context.sessionID)
         await writeFile(filePath, fileContent)
         await regenerateIndex(args.scope as MemoryScope, worktree, globalPath)
 

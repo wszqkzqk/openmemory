@@ -25,11 +25,12 @@ describe("compaction", () => {
 
   beforeAll(async () => {
     tmpDir = join(os.tmpdir(), `openmemory-compact-${Date.now()}`)
-    await ensureDir(`${tmpDir}/.openmemory/session`)
+    const sessionDir = `${tmpDir}/.openmemory/session/ses_test123`
+    await ensureDir(sessionDir)
     await ensureDir(`${tmpDir}/.openmemory/project`)
 
     await writeFile(
-      `${tmpDir}/.openmemory/session/debug-note.md`,
+      `${sessionDir}/debug-note.md`,
       buildMemoryFile(
         { ...baseFm, title: "Debug: Memory leak", type: "context", tags: ["debug"], importance: 2 },
         "Memory leak only reproduces when NODE_ENV=production.",
@@ -37,7 +38,7 @@ describe("compaction", () => {
     )
 
     await writeFile(
-      `${tmpDir}/.openmemory/session/finding.md`,
+      `${sessionDir}/finding.md`,
       buildMemoryFile(
         { ...baseFm, title: "Finding: Auth bug root cause", type: "context", tags: ["auth", "bug"], importance: 4 },
         "Root cause is expired refresh token not handled in middleware.",
@@ -60,14 +61,14 @@ describe("compaction", () => {
   })
 
   it("buildCompactionContext includes session discoveries", async () => {
-    const context = await buildCompactionContext(tmpDir, "/tmp/openmemory")
+    const context = await buildCompactionContext(tmpDir, "/tmp/openmemory", "ses_test123")
     expect(context).toContain("Session Discoveries")
     expect(context).toContain("Debug: Memory leak")
     expect(context).toContain("Finding: Auth bug root cause")
   })
 
   it("buildCompactionContext includes project memory index", async () => {
-    const context = await buildCompactionContext(tmpDir, "/tmp/openmemory")
+    const context = await buildCompactionContext(tmpDir, "/tmp/openmemory", "ses_test123")
     expect(context).toContain("Project Memory (Active)")
     expect(context).toContain("Architecture")
   })

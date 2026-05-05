@@ -70,7 +70,7 @@ export const OpenMemoryPlugin: Plugin = async (ctx) => {
       state.firstTurnDone = true
 
       try {
-        const { stats, projectIndex, globalIdentity } = await collectContextForInjection(
+        const { stats, projectIndex, globalMemory } = await collectContextForInjection(
           worktree,
           config.globalPath,
         )
@@ -78,7 +78,7 @@ export const OpenMemoryPlugin: Plugin = async (ctx) => {
         const total = Object.values(stats).reduce((s, v) => s + v.total, 0)
         if (total === 0) return // No memories to inject
 
-        const contextBlock = buildContextBlock(stats, projectIndex, globalIdentity)
+        const contextBlock = buildContextBlock(stats, projectIndex, globalMemory)
 
         // Merge into existing system prompt to avoid multi-system-message bug
         if (output.system.length > 0 && output.system[0]) {
@@ -92,9 +92,9 @@ export const OpenMemoryPlugin: Plugin = async (ctx) => {
     },
 
     // ── Compaction Memory Preservation ─────────────────────────
-    "experimental.session.compacting": async (_input, output) => {
+    "experimental.session.compacting": async (input, output) => {
       try {
-        const context = await buildCompactionContext(worktree, config.globalPath)
+        const context = await buildCompactionContext(worktree, config.globalPath, input.sessionID)
         if (context.trim().length > 0) {
           output.context.push(context)
         }

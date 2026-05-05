@@ -92,10 +92,10 @@ export interface PluginConfig {
  * Session memory: "session/<slug>.md" stored at .openmemory/session/<slug>.md
  * Global memory: "<slug>.md" stored at globalPath/<slug>.md
  */
-export function resolveMemoryDir(scope: MemoryScope, worktree: string, globalPath: string): string {
+export function resolveMemoryDir(scope: MemoryScope, worktree: string, globalPath: string, sessionID?: string): string {
   switch (scope) {
     case "session":
-      return `${worktree}/.openmemory/session`
+      return sessionID ? `${worktree}/.openmemory/session/${sessionID}` : `${worktree}/.openmemory/session`
     case "project":
       return `${worktree}/.openmemory/project`
     case "global":
@@ -108,8 +108,9 @@ export function resolveMemoryPath(
   slug: string,
   worktree: string,
   globalPath: string,
+  sessionID?: string,
 ): string {
-  const dir = resolveMemoryDir(scope, worktree, globalPath)
+  const dir = resolveMemoryDir(scope, worktree, globalPath, sessionID)
   return `${dir}/${slug}.md`
 }
 

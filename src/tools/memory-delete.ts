@@ -31,7 +31,7 @@ export function memoryDeleteTool(_config: PluginConfig) {
 
         const worktree = context.worktree || context.directory
         const globalPath = getGlobalMemoryPath()
-        const filePath = resolveMemoryPath(args.scope as MemoryScope, args.slug, worktree, globalPath)
+        const filePath = resolveMemoryPath(args.scope as MemoryScope, args.slug, worktree, globalPath, context.sessionID)
 
         if (!(await fileExists(filePath))) {
           return JSON.stringify({

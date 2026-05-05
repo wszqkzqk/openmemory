@@ -2,12 +2,16 @@ import type { MemoryFile, MemoryIndex, MemoryIndexEntry, MemoryScope, MemoryStat
 import { resolveMemoryDir } from "./types"
 import { listMdFiles, writeFile, readFile, fileExists } from "./storage"
 import { readMemoryFile } from "./frontmatter"
+import { readdir } from "node:fs/promises"
+import { join } from "node:path"
 
 export async function regenerateIndex(
   scope: MemoryScope,
   worktree: string,
   globalPath: string,
 ): Promise<void> {
+  if (scope === "session") return // Session scope is ephemeral, no index needed
+
   const dir = resolveMemoryDir(scope, worktree, globalPath)
   const files = await listMdFiles(dir)
 
@@ -132,7 +136,25 @@ export async function getMemoryStats(
 ): Promise<Record<MemoryScope, { total: number; active: number; stale: number; archived: number }>> {
   const result: Record<string, { total: number; active: number; stale: number; archived: number }> = {}
 
-  for (const scope of ["session", "project", "global"] as MemoryScope[]) {
+  // Session scope — count files across all session subdirectories
+  let sessionTotal = 0
+  const sessionBase = join(worktree, ".openmemory", "session")
+  if (await fileExists(sessionBase)) {
+    try {
+      const entries = await readdir(sessionBase, { withFileTypes: true })
+      const sessionDirs = entries.filter(e => e.isDirectory()).map(e => join(sessionBase, e.name))
+      for (const dir of sessionDirs) {
+        const files = await listMdFiles(dir)
+        sessionTotal += files.length
+      }
+    } catch {
+      // ignore
+    }
+  }
+  result["session"] = { total: sessionTotal, active: sessionTotal, stale: 0, archived: 0 }
+
+  // Project and global — use indexes
+  for (const scope of ["project", "global"] as MemoryScope[]) {
     const index = await readIndex(scope, worktree, globalPath)
     result[scope] = index
       ? {

@@ -2,6 +2,8 @@ import type { MemoryScope, MemoryFrontMatter, StalenessReport, StalenessReason }
 import { resolveMemoryDir } from "./types"
 import { listMdFiles, fileExists } from "./storage"
 import { readMemoryFile } from "./frontmatter"
+import { readdir } from "node:fs/promises"
+import { join } from "node:path"
 
 const MS_PER_DAY = 86_400_000
 
@@ -16,23 +18,53 @@ export async function checkStaleness(
   const reports: StalenessReport[] = []
 
   for (const s of scopes) {
+    if (s === "session") {
+      const sessionReports = await checkSessionStaleness(worktree, staleAgeDays)
+      reports.push(...sessionReports)
+      continue
+    }
+
     const dir = resolveMemoryDir(s, worktree, globalPath)
     if (!(await fileExists(dir))) continue
 
     const files = await listMdFiles(dir)
     for (const filename of files) {
       const slug = filename.replace(/\.md$/, "")
-      const path = `${dir}/${filename}`
+      const path = join(dir, filename)
       const memory = await readMemoryFile(path, slug, s)
       if (!memory || memory.frontmatter.status === "archived") continue
 
-      const report = checkMemoryStaleness(
-        memory.frontmatter,
-        slug,
-        s,
-        staleAgeDays,
-        currentGitHash,
-      )
+      const report = checkMemoryStaleness(memory.frontmatter, slug, s, staleAgeDays, currentGitHash)
+      if (report) reports.push(report)
+    }
+  }
+
+  return reports
+}
+
+async function checkSessionStaleness(worktree: string, staleAgeDays: number): Promise<StalenessReport[]> {
+  const reports: StalenessReport[] = []
+  const sessionBase = join(worktree, ".openmemory", "session")
+
+  if (!(await fileExists(sessionBase))) return reports
+
+  let sessionDirs: string[] = []
+  try {
+    const entries = await readdir(sessionBase, { withFileTypes: true })
+    sessionDirs = entries.filter(e => e.isDirectory()).map(e => join(sessionBase, e.name))
+  } catch {
+    return reports
+  }
+
+  for (const sessionDir of sessionDirs) {
+    const files = await listMdFiles(sessionDir)
+    for (const filename of files) {
+      const slug = filename.replace(/\.md$/, "")
+      const path = join(sessionDir, filename)
+      const memory = await readMemoryFile(path, slug, "session")
+      if (!memory || memory.frontmatter.status === "archived") continue
+
+      const report = checkMemoryStaleness(memory.frontmatter, slug, "session", staleAgeDays)
       if (report) reports.push(report)
     }
   }
@@ -47,41 +79,26 @@ function checkMemoryStaleness(
   staleAgeDays: number,
   currentGitHash?: string,
 ): StalenessReport | null {
-  // Check expiration
   if (fm.expires) {
     const expiresDate = new Date(fm.expires)
     if (expiresDate < new Date()) {
-      return {
-        slug,
-        scope,
-        title: fm.title,
-        reason: "expired",
-        detail: `Expired on ${fm.expires}`,
-      }
+      return { slug, scope, title: fm.title, reason: "expired", detail: `Expired on ${fm.expires}` }
     }
   }
 
-  // Check git hash drift
   if (fm.gitHash && currentGitHash && fm.gitHash !== currentGitHash) {
     return {
-      slug,
-      scope,
-      title: fm.title,
-      reason: "git-hash-drift",
+      slug, scope, title: fm.title, reason: "git-hash-drift",
       detail: `Memory recorded at git ${fm.gitHash}, HEAD is now ${currentGitHash}. References may be outdated.`,
     }
   }
 
-  // Check age
   const updatedTime = new Date(fm.updated).getTime()
   const now = Date.now()
   if (now - updatedTime > staleAgeDays * MS_PER_DAY) {
     const daysOld = Math.round((now - updatedTime) / MS_PER_DAY)
     return {
-      slug,
-      scope,
-      title: fm.title,
-      reason: "age-exceeded",
+      slug, scope, title: fm.title, reason: "age-exceeded",
       detail: `Last updated ${daysOld} days ago (exceeds ${staleAgeDays}-day threshold).`,
     }
   }

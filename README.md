@@ -186,7 +186,7 @@ bun test        # 56 tests, 7 suites
 bun run build   # → dist/index.js
 ```
 
-The full design document is in [`openmemory-design.md`](openmemory-design.md) — architecture rationale, research against 11 competing plugins, and verified API details.
+The full design document is in [`DESIGN.md`](DESIGN.md) — architecture rationale, research against 11 competing plugins, and verified API details.
 
 ---
 
