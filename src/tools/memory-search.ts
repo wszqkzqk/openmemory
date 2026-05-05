@@ -52,6 +52,7 @@ export function memorySearchTool(config: PluginConfig) {
           },
           worktree,
           globalPath,
+          context.sessionID,
         )
 
         if (results.length === 0) {

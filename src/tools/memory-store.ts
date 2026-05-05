@@ -58,28 +58,11 @@ export function memoryStoreTool(_config: PluginConfig) {
         const worktree = context.worktree || context.directory
         const globalPath = getGlobalMemoryPath()
 
-        // Global write requires explicit user permission
-        if (args.scope === "global") {
-          try {
-            await (context.ask as any)?.({
-              permission: "openmemory_global_write",
-              patterns: [args.slug],
-              always: [],
-              metadata: { title: args.title, scope: "global" },
-            })
-          } catch {
-            // If ask is not available or denied, proceed with a note
-          }
-        }
-
-        // Get current git hash
         let gitHash: string | undefined
         try {
           const { stdout } = await Bun.$`git -C ${worktree} rev-parse HEAD`.nothrow()
           gitHash = stdout.toString().trim() || undefined
-        } catch {
-          // Not a git repo or git not available
-        }
+        } catch {}
 
         const now = new Date().toISOString()
         const projectSlug = worktree.split("/").pop() || "unknown"

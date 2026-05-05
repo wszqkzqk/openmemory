@@ -19,14 +19,11 @@ export function memoryCheckTool(config: PluginConfig) {
         const worktree = context.worktree || context.directory
         const globalPath = getGlobalMemoryPath()
 
-        // Try to get current git hash
         let currentGitHash: string | undefined
         try {
           const { stdout } = await Bun.$`git -C ${worktree} rev-parse HEAD`.nothrow()
           currentGitHash = stdout.toString().trim() || undefined
-        } catch {
-          // OK
-        }
+        } catch {}
 
         const scope = args.scope as any
         const reports = await checkStaleness(scope, worktree, globalPath, config.staleAgeDays, currentGitHash)

@@ -59,7 +59,5 @@ export async function cleanupSessionMemories(worktree: string, sessionID?: strin
   const dir = resolveMemoryDir("session", worktree, "", sessionID)
   try {
     await rm(dir, { recursive: true, force: true })
-  } catch {
-    // Best effort — directory may not exist
-  }
+  } catch {}
 }

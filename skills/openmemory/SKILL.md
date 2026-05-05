@@ -123,6 +123,19 @@ Browse the list, read what looks relevant, grep when you know what to search for
 
 ## Reference
 
+### Tools
+
+| Tool | Key parameters |
+|---|---|
+| `memory_store` | `slug`, `title`, `type`, `scope`, `tags`, `content`, `importance?`, `related?`, `entities?` |
+| `memory_get` | `slug`, `scope` |
+| `memory_search` | `query?`, `scope?`, `tags?`, `type?`, `status?`, `limit?` |
+| `memory_list` | `scope`, `status?` |
+| `memory_update` | `slug`, `scope`, `title?`, `tags?`, `content?`, `status?`, `importance?`, `expires?` |
+| `memory_delete` | `slug`, `scope`, `mode` (`archive` or `delete`) |
+| `memory_scan` | (no args — returns cross-scope overview) |
+| `memory_check` | `scope?` (default: all) |
+
 ### Memory Scopes
 
 | Scope | Path | Use For |

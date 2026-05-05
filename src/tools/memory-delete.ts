@@ -40,20 +40,6 @@ export function memoryDeleteTool(_config: PluginConfig) {
           })
         }
 
-        // Global operations require user permission
-        if (args.scope === "global") {
-          try {
-            await (context.ask as any)?.({
-              permission: "openmemory_global_write",
-              patterns: [args.slug],
-              always: [],
-              metadata: { title: args.slug, scope: "global", action: args.mode },
-            })
-          } catch {
-            // proceed
-          }
-        }
-
         if (args.mode === "archive") {
           const memory = await readMemoryFile(filePath, args.slug, args.scope as MemoryScope)
           if (memory) {

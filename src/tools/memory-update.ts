@@ -73,20 +73,6 @@ export function memoryUpdateTool(_config: PluginConfig) {
           })
         }
 
-        // Global write requires explicit user permission
-        if (args.scope === "global") {
-          try {
-            await (context.ask as any)?.({
-              permission: "openmemory_global_write",
-              patterns: [args.slug],
-              always: [],
-              metadata: { title: memory.frontmatter.title, scope: "global", action: "update" },
-            })
-          } catch {
-            // proceed
-          }
-        }
-
         // Merge changes
         const fm = { ...memory.frontmatter }
         if (args.title !== undefined) fm.title = args.title
@@ -97,14 +83,11 @@ export function memoryUpdateTool(_config: PluginConfig) {
 
         fm.updated = new Date().toISOString()
 
-        // Update git hash
         try {
           const { stdout } = await Bun.$`git -C ${worktree} rev-parse HEAD`.nothrow()
           const hash = stdout.toString().trim()
           if (hash) fm.gitHash = hash
-        } catch {
-          // OK
-        }
+        } catch {}
 
         const body = args.content !== undefined ? args.content : memory.body
         const fileContent = buildMemoryFile(fm, body)

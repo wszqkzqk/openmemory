@@ -19,6 +19,7 @@ export async function searchMemories(
   params: SearchParams,
   worktree: string,
   globalPath: string,
+  sessionID?: string,
 ): Promise<SearchResult[]> {
   const scopes: MemoryScope[] = params.scope ? [params.scope] : ["session", "project", "global"]
   const results: SearchResult[] = []
@@ -28,12 +29,11 @@ export async function searchMemories(
 
   for (const scope of scopes) {
     if (scope === "session") {
-      const sessionResults = await searchSessionScope(params, worktree, needsBodyScan)
+      const sessionResults = await searchSessionScope(params, worktree, needsBodyScan, sessionID)
       results.push(...sessionResults)
       continue
     }
 
-    // For project and global scopes, prefer index; fall back to file scan
     const index = await readIndex(scope, worktree, globalPath)
 
     if (index) {
@@ -105,7 +105,6 @@ export async function searchMemories(
         }
       }
     } else {
-      // Fallback: no index available, scan files directly
       const dir = scope === "project"
         ? join(worktree, ".openmemory", "project")
         : globalPath
@@ -126,6 +125,7 @@ async function searchSessionScope(
   params: SearchParams,
   worktree: string,
   needsBodyScan: boolean,
+  sessionID?: string,
 ): Promise<SearchResult[]> {
   const query = params.query?.toLowerCase()
   const sessionBase = join(worktree, ".openmemory", "session")
@@ -133,13 +133,17 @@ async function searchSessionScope(
 
   if (!(await fileExists(sessionBase))) return []
 
-  // Walk all session subdirectories
   let sessionDirs: string[] = []
   try {
     const entries = await readdir(sessionBase, { withFileTypes: true })
     sessionDirs = entries.filter(e => e.isDirectory()).map(e => join(sessionBase, e.name))
   } catch {
     return []
+  }
+
+  // If sessionID is known, only search the current session's directory
+  if (sessionID) {
+    sessionDirs = sessionDirs.filter(d => d.endsWith(sessionID))
   }
 
   for (const sessionDir of sessionDirs) {

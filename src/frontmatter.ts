@@ -60,7 +60,7 @@ function isValidSource(v: unknown): v is string {
 }
 
 function toISODate(d: Date): string {
-  return d.toISOString().split("T")[0] ?? ""
+  return d.toISOString().split("T")[0] || "1970-01-01"
 }
 
 export function formatFrontMatter(fm: MemoryFrontMatter): string {

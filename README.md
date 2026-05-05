@@ -24,16 +24,32 @@ The design principle: **the filesystem is the database**. No moving parts.
 
 ## Usage
 
-You don't call the tools yourself. The agent does. But here's what a typical session looks like under the hood.
+Put this in `opencode.json`:
+
+```json
+{
+  "plugin": ["@openmemory/opencode-plugin"],
+  "permission": {
+    "skill": { "openmemory": "allow" }
+  }
+}
+```
+
+Directories are created on first use. No config file required.
+
+You don't call the tools yourself. The agent does. Here's what a typical session looks like under the hood.
 
 ```
 User: "Add rate limiting to the API"
 
-Agent calls memory_search { query: "rate limiting api" }
-  → Hits decisions.md: Redis is available, already in the stack
+Agent calls memory_list { scope: "project" }
+  → Table shows: decisions, architecture, testing-conventions, gotchas
 
-Agent calls memory_get { slug: "decisions", scope: "project" }
-  → Reads full context: Redis config details, connection pattern
+Agent picks decisions.md from the list, calls memory_get { slug: "decisions", scope: "project" }
+  → Reads full context. Discovers Redis is already in the stack.
+
+Agent calls memory_search { query: "rate limit", scope: "project" }
+  → Quick grep, nothing found. Proceeds with implementation.
 
 Agent implements rate limiting using Redis
   → Tests pass, code committed
@@ -47,7 +63,7 @@ Agent calls memory_store {
 }
 ```
 
-Three turns of the agent thinking ahead of you. It finds existing knowledge, uses it, then records what it did so the next session picks up where this one left off.
+Three turns of the agent thinking ahead of you. It browses the memory list, reads what's relevant, greps for specifics. It finds existing knowledge, uses it, then records what it did so the next session picks up where this one left off.
 
 When a memory goes stale — a dependency upgrades, an API changes, you tell the agent to switch patterns — `memory_check` surfaces it. The agent marks it stale or updates it. Bad information doesn't linger.
 
@@ -113,12 +129,14 @@ The `git-hash` records the full commit SHA-1 at the time the memory was written.
 |---|---|---|
 | `title` | string | One-line summary |
 | `type` | identity / directive / context / bookmark | Semantic category |
-| `scope` | global / project:`<slug>` / session:`<id>` | Where it lives |
+| `scope` | session / project / global | Tool args use bare values; stored as `project:<slug>` or `session:<id>` in YAML |
 | `tags` | string[] | 1-5 lowercase keywords |
 | `status` | active / stale / archived | Freshness indicator |
 | `importance` | 1-5 | Retrieval priority, default 3 |
 | `git-hash` | string (optional) | Full commit SHA-1 when written |
 | `expires` | date (optional) | Auto-excluded after this date |
+| `related` | string[] (optional) | Linked memory slugs |
+| `entities` | string[] (optional) | Libraries, services mentioned |
 
 ---
 
@@ -149,20 +167,9 @@ OpenMemory hooks into the compaction lifecycle and injects a summary of active p
 
 ---
 
-## Installation
+## Configuration
 
-```json
-{
-  "plugin": ["@openmemory/opencode-plugin"],
-  "permission": {
-    "skill": { "openmemory": "allow" }
-  }
-}
-```
-
-That's it. Directories are created on first use. No config file required.
-
-Optional tweaks if you want them:
+Optional overrides:
 
 ```json
 {

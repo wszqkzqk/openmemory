@@ -10,7 +10,7 @@ export async function regenerateIndex(
   worktree: string,
   globalPath: string,
 ): Promise<void> {
-  if (scope === "session") return // Session scope is ephemeral, no index needed
+  if (scope === "session") return
 
   const dir = resolveMemoryDir(scope, worktree, globalPath)
   const files = await listMdFiles(dir)
@@ -68,12 +68,12 @@ export function formatIndexMarkdown(index: MemoryIndex): string {
       lines.push("| Slug | Title | Type | Tags | Updated | Importance |")
       lines.push("|------|-------|------|------|---------|------------|")
     }
-    for (const e of entries) {
-      const tags = e.tags.join(", ") || "—"
+      for (const e of entries) {
+      const tags = esc(e.tags.join(", ")) || "—"
       if (status === "stale") {
-        lines.push(`| ${e.slug} | ${e.title} | ${e.type} | ${tags} | ${e.updated} | ${e.expires ?? "—"} |`)
+        lines.push(`| ${esc(e.slug)} | ${esc(e.title)} | ${esc(e.type)} | ${tags} | ${e.updated} | ${e.expires ?? "—"} |`)
       } else {
-        lines.push(`| ${e.slug} | ${e.title} | ${e.type} | ${tags} | ${e.updated} | ${e.importance} |`)
+        lines.push(`| ${esc(e.slug)} | ${esc(e.title)} | ${esc(e.type)} | ${tags} | ${e.updated} | ${e.importance} |`)
       }
     }
     lines.push("")
@@ -105,7 +105,7 @@ function parseIndexMarkdown(content: string, scope: MemoryScope): MemoryIndex {
     else if (line.startsWith("## stale")) currentStatus = "stale"
     else if (line.startsWith("## archived")) currentStatus = "archived"
     else if (line.startsWith("|") && !line.includes("---") && currentStatus) {
-      const cells = line.split("|").map(c => c.trim()).filter(Boolean)
+      const cells = line.split("|").map(c => unesc(c.trim())).filter(Boolean)
       if (cells.length >= 5) {
         entries.push({
           slug: cells[0] ?? "",
@@ -148,7 +148,6 @@ export async function getMemoryStats(
         sessionTotal += files.length
       }
     } catch {
-      // ignore
     }
   }
   result["session"] = { total: sessionTotal, active: sessionTotal, stale: 0, archived: 0 }
@@ -167,4 +166,12 @@ export async function getMemoryStats(
   }
 
   return result as Record<MemoryScope, typeof result[string]>
+}
+
+function esc(s: string): string {
+  return s.replace(/\|/g, "\\|")
+}
+
+function unesc(s: string): string {
+  return s.replace(/\\\|/g, "|")
 }
