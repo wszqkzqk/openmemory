@@ -2,9 +2,9 @@ import type { Plugin } from "@opencode-ai/plugin"
 import type { PluginConfig } from "./types"
 import { DEFAULT_CONFIG } from "./types"
 import { getGlobalMemoryPath } from "./shared"
-import { ensureDir } from "./storage"
+import { ensureDir, readFile } from "./storage"
 import { collectContextForInjection, buildContextBlock } from "./injection"
-import { buildCompactionContext } from "./compaction"
+import { buildCompactionContext, cleanupSessionMemories } from "./compaction"
 import { checkStaleness } from "./staleness"
 
 import { memoryStoreTool } from "./tools/memory-store"
@@ -16,11 +16,29 @@ import { memoryDeleteTool } from "./tools/memory-delete"
 import { memoryScanTool } from "./tools/memory-scan"
 import { memoryCheckTool } from "./tools/memory-check"
 
-export const OpenMemoryPlugin: Plugin = async (ctx) => {
-  const config: PluginConfig = {
-    ...DEFAULT_CONFIG,
-    globalPath: getGlobalMemoryPath(),
+async function loadConfig(): Promise<PluginConfig> {
+  const config = { ...DEFAULT_CONFIG, globalPath: getGlobalMemoryPath() }
+
+  const candidates = [
+    `${getGlobalMemoryPath()}/../opencode/openmemory.json`,
+    `${process.env.HOME}/.config/opencode/openmemory.json`,
+  ]
+  for (const path of candidates) {
+    try {
+      const raw = await readFile(path)
+      const overrides = JSON.parse(raw)
+      if (overrides.globalPath) config.globalPath = overrides.globalPath
+      if (overrides.staleAgeDays != null) config.staleAgeDays = overrides.staleAgeDays
+      if (overrides.maxInjectTokens != null) config.maxInjectTokens = overrides.maxInjectTokens
+      break
+    } catch {}
   }
+
+  return config
+}
+
+export const OpenMemoryPlugin: Plugin = async (ctx) => {
+  const config = await loadConfig()
 
   const worktree = ctx.worktree || ctx.directory
   await ensureDir(`${worktree}/.openmemory/session`)
@@ -28,6 +46,7 @@ export const OpenMemoryPlugin: Plugin = async (ctx) => {
   await ensureDir(config.globalPath)
 
   const injectedSessions = new Set<string>()
+  let staleCount = 0
 
   return {
     tool: {
@@ -41,9 +60,6 @@ export const OpenMemoryPlugin: Plugin = async (ctx) => {
       memory_check: memoryCheckTool(config),
     },
 
-    // Inject memory index on first LLM call per session.
-    // We use system.transform rather than session.created (#14808 unreliable).
-    // Merge into system[0] rather than push to avoid breaking Qwen/vLLM.
     "experimental.chat.system.transform": async (input, output) => {
       if (!config.injectOnFirstTurn) return
       const sid = input.sessionID
@@ -59,31 +75,35 @@ export const OpenMemoryPlugin: Plugin = async (ctx) => {
         const total = Object.values(stats).reduce((s, v) => s + v.total, 0)
         if (total === 0) return
 
-        const contextBlock = buildContextBlock(stats, projectIndex, globalMemory)
+        let contextBlock = buildContextBlock(stats, projectIndex, globalMemory)
+
+        if (staleCount > 0) {
+          contextBlock += `\n\n⚠️ **${staleCount} stale memories** — run \`memory_check\` to review.`
+        }
 
         if (output.system.length > 0 && output.system[0]) {
           output.system[0] = output.system[0] + "\n\n" + contextBlock
         } else {
           output.system.push(contextBlock)
         }
-      } catch {
-        // Best-effort — injection failure must not block the LLM call
-      }
+      } catch {}
     },
 
     "experimental.session.compacting": async (input, output) => {
       try {
-        const ctx = await buildCompactionContext(worktree, config.globalPath, input.sessionID)
-        if (ctx.trim().length > 0) {
-          output.context.push(ctx)
+        const contextBlock = await buildCompactionContext(worktree, config.globalPath, input.sessionID)
+        if (contextBlock.trim().length > 0) {
+          output.context.push(contextBlock)
         }
+        await cleanupSessionMemories(worktree, input.sessionID)
       } catch {}
     },
 
     event: async ({ event }) => {
       if (event.type !== "session.idle") return
       try {
-        await checkStaleness(undefined, worktree, config.globalPath, config.staleAgeDays)
+        const reports = await checkStaleness(undefined, worktree, config.globalPath, config.staleAgeDays)
+        staleCount = reports.length
       } catch {}
     },
   }

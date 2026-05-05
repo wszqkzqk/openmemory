@@ -26,7 +26,7 @@ The design enforces three principles: the agent does the busywork (autonomous cr
         architecture.md
         decisions.md
         gotchas.md
-    index.md                        ← Compact metadata table, regenerated on write
+        index.md                    ← Compact metadata table, regenerated on write
 ```
 
 | Layer | Location | Manager | Lifetime |
@@ -151,21 +151,13 @@ Session memories from the current `sessionID` are collected, summarized, and the
 
 **Hook:** `event` (`session.idle`)
 
-When the agent loop becomes idle, a lightweight staleness check runs across all scopes. Warnings are stored in module-level state and surfaced on the next session's first turn.
-
-**Fire-and-forget.** The `event` hook's return promise is NOT awaited by the OpenCode runtime. Heavy processing is avoided; only a lightweight file scan is run.
-
-### 4. Tool usage tracking
-
-**Hook:** `tool.execute.after`
-
-Currently a no-op placeholder. In future versions this will feed data into intelligent memory extraction — e.g., "the agent just edited three auth files, it probably discovered something worth remembering."
+The `event` hook's return promise is not awaited by the OpenCode runtime. Stale counts are captured and surfaced on the next session's first turn via the injection block.
 
 ---
 
 ## Configuration
 
-Defaults are embedded in the plugin source. Optional overrides via `openmemory.json`:
+Defaults are embedded in the plugin source. Optional overrides via `~/.config/opencode/openmemory.json`:
 
 | Key | Default | Purpose |
 |---|---|---|

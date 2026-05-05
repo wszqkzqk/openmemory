@@ -85,10 +85,9 @@ export interface PluginConfig {
 }
 
 /**
- * Build a scoped filename that encodes the scope.
- * Project memory: "project/<slug>.md" stored at .openmemory/project/<slug>.md
- * Session memory: "session/<slug>.md" stored at .openmemory/session/<slug>.md
- * Global memory: "<slug>.md" stored at globalPath/<slug>.md
+ * Project memory: .openmemory/project/<slug>.md
+ * Session memory: .openmemory/session/<sessionID>/<slug>.md
+ * Global memory: <globalPath>/<slug>.md
  */
 export function resolveMemoryDir(scope: MemoryScope, worktree: string, globalPath: string, sessionID?: string): string {
   switch (scope) {

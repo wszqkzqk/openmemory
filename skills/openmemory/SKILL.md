@@ -140,15 +140,15 @@ Browse the list, read what looks relevant, grep when you know what to search for
 
 | Scope | Path | Use For |
 |---|---|---|
-| `session` | `.openmemory/session/` | Temporary notes for current task |
+| `session` | `.openmemory/session/<id>/` | Temporary notes for current task |
 | `project` | `.openmemory/project/` | Project knowledge that spans sessions |
 | `global` | `~/.local/share/openmemory/` | Cross-project preferences |
 
 ### File Naming
 
 - kebab-case slugs: `auth-architecture`, `testing-conventions`
-- Session files: `ses_YYYYMMDD_descriptive-slug`
-- 2-5 words, concise
+- Session files are stored under `.openmemory/session/<sessionID>/` — use concise descriptive slugs
+- 2-5 words
 
 ### Front Matter Fields
 
@@ -156,10 +156,14 @@ Browse the list, read what looks relevant, grep when you know what to search for
 |---|---|---|
 | `title` | string | One-line summary |
 | `type` | identity / directive / context / bookmark | Semantic category |
-| `scope` | session / project / global | Where it lives |
+| `scope` | session / project / global | Tool args use bare values; stored as `project:<slug>` or `session:<id>` |
 | `tags` | string[] | 1-5 lowercase keywords |
+| `created` | date | ISO 8601 when the memory was created |
+| `updated` | date | ISO 8601 when last modified |
 | `status` | active / stale / archived | Freshness |
+| `source` | user / agent / system | Who created it (default: agent) |
 | `importance` | 1-5 | Retrieval priority (default 3) |
-| `git-hash` | string | Commit SHA-1 when written |
-| `related` | string[] | Linked memory slugs |
-| `entities` | string[] | Libraries, services mentioned |
+| `git-hash` | string (optional) | Full commit SHA-1 when written |
+| `expires` | date (optional) | Auto-excluded after this date |
+| `related` | string[] (optional) | Linked memory slugs |
+| `entities` | string[] (optional) | Libraries, services mentioned |

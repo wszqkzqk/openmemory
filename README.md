@@ -69,8 +69,8 @@ Global memory requires your permission. "Remember that I always use TypeScript s
     how-to-write-vala.md
 
 project/.openmemory/
-    session/                     # session — scratchpad, dies with the tab
-        ses_20260505_nasty-bug.md
+    session/ses_abc123/          # session — scratchpad, dies with the tab
+        nasty-bug.md
     project/                     # project — stuff other sessions need
         why-we-ditched-grpc.md
         test-conventions.md
