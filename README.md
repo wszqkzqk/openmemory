@@ -176,14 +176,6 @@ Optional tweaks if you want them:
 
 ---
 
-## Limitations
-
-No vector search. No embeddings. No LLM-powered contradiction detection. No web dashboard.
-
-These are fine ideas for version two. Version one gets the fundamentals right: reliable storage, accurate retrieval, automatic cleanup. Everything else is optimization.
-
----
-
 ## Development
 
 ```bash
