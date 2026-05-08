@@ -2,7 +2,7 @@ import type { Plugin } from "@opencode-ai/plugin"
 import type { PluginConfig } from "./types"
 import { DEFAULT_CONFIG } from "./types"
 import { getGlobalMemoryPath } from "./shared"
-import { ensureDir, readFile } from "./storage"
+import { ensureDir, readFile, writeFile, fileExists } from "./storage"
 import { collectContextForInjection, buildContextBlock } from "./injection"
 import { buildCompactionContext, cleanupSessionMemories } from "./compaction"
 import { checkStaleness } from "./staleness"
@@ -44,6 +44,11 @@ export const OpenMemoryPlugin: Plugin = async (ctx) => {
   await ensureDir(`${worktree}/.openmemory/session`)
   await ensureDir(`${worktree}/.openmemory/project`)
   await ensureDir(config.globalPath)
+
+  const gitignorePath = `${worktree}/.openmemory/.gitignore`
+  if (!(await fileExists(gitignorePath))) {
+    await writeFile(gitignorePath, "*\n")
+  }
 
   const injectedSessions = new Set<string>()
   let staleCount = 0
